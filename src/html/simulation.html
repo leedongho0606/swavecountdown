@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>지진파 도달알림 - 시뮬레이션 @ LDH0606</title>
+    <script src="./js/jquery-3.5.1.min.js"></script>
+    <style>
+        body {
+            background-color: black;
+            color: yellow;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>시뮬레이션 목록</h1>
+    <h4>출처: https://www.weather.go.kr/pews/necismenu.html</h4>
+    <h4>시뮬레이션 데이터 원본 출처(가변 URL):<br><span id="dataurl">불러오는 중</span></h4>
+    <h4><span id="status">불러오는 중</span></h4>
+    <button onclick="SimStart(-1)">시뮬레이션 종료</button>
+    <hr>
+</body>
+
+<script>
+    let SimList;
+    function GetSimList(eqkid) {
+        $.ajax({
+            url: "https://www.weather.go.kr/pews/data/list/" + eqkid + ".l",
+            method: "GET",
+            dataType: "json"
+        }).done(data => {
+            try {
+                $("#status").text("기상청 서버로 부터 " + data.length + "개 항목 수집 성공");
+                $("#dataurl").text(this.url);
+                SimList = data;
+                Object.keys(data).forEach(k => {
+                    document.body.innerHTML += `<button onclick="SimStart(${k})">${data[k]["dat"]}<br>${data[k]["loc"]}<br>M ${data[k]["mag"]}</button><br>`;
+                });
+            } catch (e) {
+                $("#status").text("기상청 서버로 부터 데이터 분석 실패");
+            }
+        }).fail((xhr, status, errorThrown) => {
+            $("#status").text("오류로 인하여 기상청 서버로 부터 데이터 수집 실패");
+            $("#dataurl").text("알수없음");
+        });
+    }
+    function SimStart(data) {
+        if (data !== -1) data = SimList[data];
+        window.swave.SendToMainProcces(data);
+    }
+</script>
+
+</html>

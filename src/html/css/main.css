@@ -1,0 +1,104 @@
+@font-face {
+    src: url("../font/NanumSquareRoundEB.ttf");
+    font-family: "nanum";
+}
+
+.titlebar {
+    -webkit-user-select: none;
+    -webkit-app-region: drag;
+  }
+  
+body {
+    font-family: "nanum";
+    background-color: black;
+    color: yellow;
+    margin: 0;
+    padding: 0;
+    top: 0;
+    left: 0;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+#header {
+    position: relative;
+    /*overflow: none;*/
+    white-space:nowrap;
+    text-align: center;
+}
+
+#header > #eqktitle {
+    font-size: 30pt;
+    color: white;
+}
+#time {
+    width: 100%;
+    display: block;
+    font-size: 14pt;
+}
+
+#time > #div-eqktime {
+    width: 50%;
+    text-align: left;
+    float: left;
+}
+
+#time > #div-nowtime {
+    width: 50%;
+    text-align: right;
+    float: left;
+}
+
+#info {
+    width: 100%;
+    text-align: center;
+    margin-top: 20px;
+}
+
+#info > #swave {
+    width: 50%;
+    float: left;
+}
+
+#info > #maxmmi {
+    width: 50%;
+    float: left;
+}
+
+#maxmmi-background{
+    border-radius: 30px;
+}
+
+.info-title {
+    font-size: 32pt;
+}
+
+.wave-info {
+    font-size: 100pt;
+    color: white;
+    font-weight: bold;
+}
+
+.wave-box {
+    display:flex;
+    justify-content: space-around;
+    align-items: center;
+    align-content: center;
+}
+.wave-line {
+    width: 50%; 
+    height: 151px; 
+    vertical-align: middle; 
+    line-height: 151px;
+}
+
+.mylocsta {
+    color: white;
+}
+/*
+.wave-footer {
+    font-size: 12pt;
+}
+*/

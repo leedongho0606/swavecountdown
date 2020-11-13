@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="css/main.css" />
+    <title>지진파 도달알림 @ LDH0606</title>
+    <script src="js/jquery-3.5.1.min.js"></script>
+</head>
+
+<body ondragstart="return false" onselectstart="return false">
+    <div id="header">
+        <span id="eqktitle">-</span>
+    </div>
+    <div id="time">
+        <div id="div-eqktime">
+            지진발생시각: <span id="eqktime">----/--/-- --:--:--</span>
+        </div>
+        <div id="div-nowtime">
+            기준시각: <span id="nowtime">Loading...</span>
+        </div>
+    </div>
+    <br>
+    <div id="info">
+        <div id="swave">
+            <div class="info-title">지진파 도달</div>
+            <div class="wave-box">
+                <div class="wave-line">
+                    <span class="wave-info swavetime">-</span>
+                </div>
+                <div class="wave-line">
+                    <span class="wave-info pwavetime">-</span>
+                </div>
+            </div>
+            <div class="wave-box">
+                <span style="color: red;">S파 도달 예상 (초)</span>
+                <span style="color: blue;">P파 도달 예상 (초)</span>
+            </div>
+        </div>
+        <div id="maxmmi">
+            <div class="maxmmi info-title">최대진도</div>
+            <div id="maxmmi-background">
+                <span class="wave-info maxmmi">-</span>
+            </div>
+            <div class="mylocsta">
+                내지역 관측소(<span class="staname">---</span>): <span class="stammi">진도 -</span>
+            </div>
+        </div>
+    </div>
+    <audio id="countdown" style="display:hidden"></audio>
+    <audio id="tts" volume="0.5" style="display:hidden"></audio>
+    <audio id="sound" style="display:hidden"></audio>
+</body>
+<script>
+    const mmicolor = ["", "#FFFFFF", "#a0e6ff", "#92d050", "#ffff00", "#ffc000", "#ff0000", "#a32777", "#632523", "#4c2600", "#000"];
+    let phase = 1, setting = {}, update = true, ttswaitlist = [];
+    function UI_update(type, result) {
+        if (!update) return;
+        if (["swavetime", "pwavetime", "phaseupdate", "maxmmi", "staupdate"].some(e => type === e)) {
+            if (type === "phaseupdate") {
+                let headercolor;
+                phase = result;
+                if (result === 2) headercolor = "red";
+                else if (result === 3) headercolor = "blue";
+                else if (result === 1) {
+                    headercolor = "black";
+                    $(`.maxmmi.info-title`).text("최대진도");
+                }
+                else headercolor = "black";
+                if (setting["pewsweb"] && (result === 2 || result === 3)) window.swave.PopupPewsWeb();
+                $("#header").css("background-color", headercolor);
+            }
+            $(".wave-info." + type).text((result !== undefined || result !== null) ? result : "?");
+            if (type === "swavetime") {
+                let color = "white";
+                if (typeof (result) === "number") {
+                    if ((setting["recp2"] && (phase === 2)) || (setting["recp3"] && (phase === 3)) && (result >= 0 && result <= 60)) CountdownPlay(`time${result}.mp3`);
+                    if (result <= 60) color = "yellow";
+                    if (result <= 20) color = "orange";
+                    if (result <= 10) color = "red";
+                    if (result < 0) color = "gray";
+                    if (result === "-") color = "white";
+                    switch (String(result).length) {
+                        case 3:
+                            $(".wave-info." + type).css("font-size", "70pt");
+                            break;
+                        case 4:
+                            $(".wave-info." + type).css("font-size", "60pt");
+                            break;
+                        default:
+                            $(".wave-info." + type).css("font-size", "100pt");
+                            break;
+                    }
+                }
+                $(".wave-info." + type).css("color", color);
+            } else if (type === "pwavetime") {
+                let color = "white";
+                if (typeof (result) === "number") {
+                    if (result < 0) color = "gray";
+                    switch (String(result).length) {
+                        case 3:
+                            $(".wave-info." + type).css("font-size", "70pt");
+                            break;
+                        case 4:
+                            $(".wave-info." + type).css("font-size", "60pt");
+                            break;
+                        default:
+                            $(".wave-info." + type).css("font-size", "100pt");
+                            break;
+                    }
+                }
+                $(".wave-info." + type).css("color", color);
+            } else if (type === "maxmmi") {
+                if (typeof (result) === "number") {
+                    $("#maxmmi-background").css("background-color", mmicolor[result]);
+                    if (result !== 1) $(".wave-info.maxmmi").css("color", "#FFFFFF");
+                    else $(".wave-info.maxmmi").css("color", "#000");
+                    if (phase >= 2) {
+                        if ((setting["recp2"] && (phase === 2)) || (setting["recp3"] && (phase === 3))) {
+                            TTSaddlist("phase" + phase + ".mp3");
+                            if (phase === 2) {
+                                SoundPlay("alarm.mp3");
+                                TTSaddlist("jindo" + result + ".mp3");
+                            }
+                            winnoti(`지진 ${(phase === 2 ? "신속" : "상세")} 정보`, `${$("#eqktitle").text().replace("M", "\n규모:")}\n${$(`.maxmmi.info-title`).text()}: ${$(".wave-info.maxmmi").text()}\n지진파 도달까지 ${$(".wave-info.swavetime").text()}초`);
+                        }
+                        $(`.maxmmi.info-title`).text((phase === 2 ? "예상" : "") + "최대진도");
+                    } else $(`.maxmmi.info-title`).text("최대진도");
+                } else if (result === "-") {
+                    $("#maxmmi-background").css("background-color", "black");
+                    $(".wave-info.maxmmi").css("color", "#FFFFFF");
+                    $(`.maxmmi.info-title`).text("최대진도");
+                }
+            }
+            if (type === "staupdate") {
+                if (result === "-") return $(".stammi").css("color", "#FFFFFF");
+                $(".staname").text(result["staname"]);
+                $(".stammi").text("진도 " + result["stammi"]).css("color", mmicolor[result["stammi"]]);
+            }
+        }
+        else $(`#${type}`).text((result || "-"));
+    }
+    function winnoti(t, b) {
+        if (Notification.permission !== "granted" || !setting["winnoti"]) return;
+        const n = new Notification(t, { body: b, icon: "../icon.ico" });
+        setTimeout(() => {
+            if (n) n.close();
+        }, 10000);
+    }
+    function CountdownPlay(path) {
+        if (!setting["sound"]) return;
+        let player = document.getElementById("countdown");
+        player.src = "../../../src/sound/" + path;
+        player.play();
+    }
+    function TTSPlay() {
+        if (!ttswaitlist[0] || !setting["sound"]) return;
+        let player = document.getElementById("tts");
+        player.src = "../../../src/sound/" + ttswaitlist[0];
+        player.play();
+        player.addEventListener("ended", function () {
+            ttswaitlist.shift();
+            TTSPlay();
+        });
+    }
+    function TTSaddlist(path) {
+        if (!ttswaitlist[0]) {
+            ttswaitlist.push(path);
+            TTSPlay();
+        } else ttswaitlist.push(path);
+    }
+    function SoundPlay(path) {
+        if (!setting["sound"]) return;
+        let player = document.getElementById("sound");
+        player.src = "../../../src/sound/" + path;
+        player.play();
+    }
+    function Setting(json) {
+        setting = json;
+    }
+    document.getElementById("tts").volume = 0.6;
+</script>
+
+</html>

@@ -1,0 +1,64 @@
+{
+  "name": "swave_countdown",
+  "version": "1.0.0",
+  "description": "swave countdown by ldh0606",
+  "main": "index.js",
+  "dependencies": {
+    "date-utils": "^1.2.21",
+    "fs": "0.0.1-security",
+    "moment": "^2.29.1",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "electron": "10.1.5",
+    "electron-packager": "^15.1.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . swavecountdown --icon=src/icon.ico --asar",
+    "build:win": "electron-builder build",
+    "pack": "electron-builder --dir --icon=src/icon.ico",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "icon": "src/icon.ico",
+    "asar": true,
+    "appId": "com.swavecountdown.app",
+    "productName": "지진파 도달알림",
+    "files": [
+      {
+        "filter": [
+          "./**/*"
+        ]
+      }
+    ],
+    "extraResources": [
+      "./src/sound"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "language": 1042,
+      "shortcutName": "지진파 도달알림",
+      "createStartMenuShortcut": true
+    },
+    "directories": {
+      "output": "installer"
+    }
+  },
+  "keywords": [],
+  "author": "LDH0606",
+  "license": "ISC"
+}
