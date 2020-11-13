@@ -210,7 +210,7 @@ exports.pews = async function () {
 
 function monitor_on() {
     const { spawn } = require('child_process'),
-        DisplayPower = spawn(__dirname + "/DisplayPower.exe").stdout.on('data', (data) => {
+        DisplayPower = spawn(__dirname + "\\DisplayPower.exe").stdout.on('data', (data) => {
             if (data.toString() === "Mouse Moved!") DisplayPower.destroy();
         });
 }
