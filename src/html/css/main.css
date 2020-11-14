@@ -6,8 +6,8 @@
 .titlebar {
     -webkit-user-select: none;
     -webkit-app-region: drag;
-  }
-  
+}
+
 body {
     font-family: "nanum";
     background-color: black;
@@ -16,6 +16,8 @@ body {
     padding: 0;
     top: 0;
     left: 0;
+    white-space: nowrap;
+    overflow: hidden; /*안먹히는거 같은데 일단쓺*/
 }
 
 ::-webkit-scrollbar {
@@ -24,8 +26,6 @@ body {
 
 #header {
     position: relative;
-    /*overflow: none;*/
-    white-space:nowrap;
     text-align: center;
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "swave_countdown",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "swave countdown by ldh0606",
   "main": "index.js",
   "dependencies": {
@@ -15,7 +15,6 @@
   },
   "scripts": {
     "start": "electron .",
-    "build": "electron-packager . swavecountdown --icon=src/icon.ico --asar",
     "build:win": "electron-builder build",
     "pack": "electron-builder --dir --icon=src/icon.ico",
     "dist": "electron-builder"

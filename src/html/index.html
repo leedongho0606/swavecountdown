@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="css/main.css" />
+    <script src="script/jquery-3.5.1.min.js"></script>
     <title>지진파 도달알림 @ LDH0606</title>
-    <script src="js/jquery-3.5.1.min.js"></script>
 </head>
 
 <body ondragstart="return false" onselectstart="return false">
@@ -87,6 +87,12 @@
                         case 4:
                             $(".wave-info." + type).css("font-size", "60pt");
                             break;
+                        case 5:
+                            $(".wave-info." + type).css("font-size", "50pt");
+                            break;
+                        case 6:
+                            $(".wave-info." + type).css("font-size", "40pt");
+                            break;
                         default:
                             $(".wave-info." + type).css("font-size", "100pt");
                             break;
@@ -103,6 +109,12 @@
                             break;
                         case 4:
                             $(".wave-info." + type).css("font-size", "60pt");
+                            break;
+                        case 5:
+                            $(".wave-info." + type).css("font-size", "50pt");
+                            break;
+                        case 6:
+                            $(".wave-info." + type).css("font-size", "40pt");
                             break;
                         default:
                             $(".wave-info." + type).css("font-size", "100pt");

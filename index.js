@@ -1,3 +1,4 @@
+"use strict";
 const { app, BrowserWindow, screen, Menu, Tray, ipcMain, dialog } = require("electron"),
     pews = require("./pews"),
     fs = require("fs");
@@ -21,11 +22,11 @@ async function update() {
     }
     if (res.statusCode !== 200 || !body) return;
     body = JSON.parse(body);
-    gitver = body["ver"].split(".");
-    nowver = String(app.getVersion()).split(".");
+    const gitver = body["ver"].split("."),
+        nowver = String(app.getVersion()).split(".");
     for (let i = 0; i < gitver.length; i++) {
         if (gitver[i] !== nowver[i]) {
-            dialog.showMessageBox({ type: "question", title: "업데이트 요청", message: "지진파 도달프로그램 v" + body["ver"] + "이(가) 배포중입니다!\n다운로드 페이지로 이동하시겠습니까?", buttons: ["취소", "이동"] })
+            dialog.showMessageBox({ type: "question", title: "업데이트 요청", message: "지진파 도달프로그램 v" + body["ver"] + "이(가) 배포중입니다!\n업데이트 사항:\n" + (body["note"] || "불러오기 실패"), buttons: ["닫기", "다운로드 페이지"] })
                 .then(r => {
                     if (r.response !== 1) return;
                     const { exec } = require('child_process');
@@ -41,7 +42,7 @@ function popupwindow(url, w, h, ren, notlocal, loaded) {
     if (popwin) popwin.close();
     popwin = new BrowserWindow({
         webPreferences: {
-            preload: `${__dirname}/src/html/js/${ren}`,
+            preload: `${__dirname}/src/html/script/${ren}`,
             devTools: pews.isdev
         },
         width: w,
@@ -68,7 +69,7 @@ function popupwindow(url, w, h, ren, notlocal, loaded) {
 function createWindow() {
     win = new BrowserWindow({
         webPreferences: {
-            preload: `${__dirname}/src/html/js/index_renderer.js`,
+            preload: `${__dirname}/src/html/script/index_renderer.js`,
             devTools: pews.isdev
         },
         width: 850,
@@ -145,12 +146,14 @@ ipcMain.on("pewsweb", event => {
     });
     event.returnValue = true;
 });
-function savesetting(readdata, solution) {
+
+function savesetting(data, solution) {
     pews.makedir();
-    fs.writeFile(pews.datapath + "setting.json", JSON.stringify(readdata), "utf-8", err => {
+    fs.writeFile(pews.datapath + "setting.json", JSON.stringify(data), "utf-8", err => {
         if (err) return dialog.showMessageBox({ type: "error", title: "데이터 " + solution + " 실패", message: "데이터를 " + solution + "하지 못하였습니다" });
     });
 }
+
 function settingdata(items) {
     process.noAsar = true;
     const readdata = {
@@ -175,19 +178,19 @@ function settingdata(items) {
     }
     catch {
         if (items == null) return null;
-        return savesetting(readdata, "생성");
+        return savesetting(json, "생성");
     }
     win.webContents.send("setting", json);
     global.setdata = json;
-    json = JSON.stringify(json);
     let stat;
     try {
         stat = fs.statSync(pews.datapath + "setting.json");
     } catch {
-        return savesetting(readdata, "생성");
+        return savesetting(json, "생성");
     }
-    if (readeddata) savesetting(readdata, "저장");
+    if (readeddata) savesetting(json, "저장");
 }
+
 let tray = null;
 function maketrayicon() {
     tray = new Tray(__dirname + "/src/icon.ico");
@@ -211,7 +214,7 @@ function maketrayicon() {
                 {
                     label: "위치설정",
                     click: function () {
-                        dialog.showMessageBox({ type: "info", title: "사용자 위치설정 안내", message: "구글지도에서 본인의 위치를 클릭하여 마커를 표시해주세요!\n마커가 표시되지 않는 경우 잠시후 재시도 하세요." });
+                        dialog.showMessageBox({ type: "info", title: "사용자 위치설정 안내", message: "지도에 본인의 위치를 클릭하여 마커를 표시해주세요!\n마커가 표시되지 않는 경우 잠시후 재시도 하세요." });
                         popupwindow("https://www.google.com/maps/", 848, 950, "gmap_inject.js", true, () => {
                             pews.location(null, r => {
                                 if (popwin) popwin.webContents.send("location", r);

@@ -1,3 +1,4 @@
+"use strict";
 require("date-utils");
 const stanamelist = require("./stalist.json"),
     request = require("request"),
@@ -5,17 +6,16 @@ const stanamelist = require("./stalist.json"),
     { dialog } = require("electron"),
     //ra = ["서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"],
     moment = require("moment"),
-    hdir = require('os').homedir(),
     noinfo = "-",
     maxEqkStrLen = 60,
     maxEqkInfoLen = 120,
     isdev = process.env.NODE_ENV === "test",
-    localpath = hdir + "\\AppData\\Local\\swavecountdown",
+    localpath = require('os').homedir() + "\\AppData\\Local\\swavecountdown",
     datapath = localpath + "\\data\\";
 
-process.on('uncaughtException', err => {
-    request.post({ url: "error report server url", json: { "content": "Node.js Error```" + err + "```" } }, err => {
-        dialog.showMessageBox({ type: "error", title: "프로그램 오류 감지", message: "오류가 감지되어 개발자에게 자동 보고되었습니다.\n계속해서 해당 창이 뜨는 경우 개발자에게 문의하십시오." });
+process.on('uncaughtException', error => {
+    request.post({ url: "error report server url", json: { "content": "```" + error.stack + "```" } }, err => {
+        dialog.showMessageBox({ type: "error", title: "프로그램 오류 감지", message: "오류가 감지되어 개발자에게 보고되었습니다.\n지속적으로 오류가 발생하는 경우 개발자에게 문의하십시오.\nEmail: leedongho050606@gmail.com\n\n" + error.stack });
     });
 });
 
@@ -44,25 +44,24 @@ function eqkHandler(data, byteArray) {
     let eqkId = "20" + parseInt(data.substr(69, 26), 2);
     if (pewsdata != "" && pewsdata != (phase + "|" + eqkId)) {
         location();
-        let originLat = 30 + (parseInt(data.substr(0, 10), 2) / 100),
+        let infoStrArr = [];
+        for (let i = byteArray.byteLength - maxEqkStrLen; i < byteArray.byteLength; i++) infoStrArr.push(byteArray[i]);
+        const originLat = 30 + (parseInt(data.substr(0, 10), 2) / 100),
             originLon = 124 + (parseInt(data.substr(10, 10), 2) / 100),
-            eqkMag = parseInt(data.substr(20, 7), 2) / 10,
-            //eqkDep = parseInt(data.substr(27, 10), 2) / 10,
-            eqkTime = Number(parseInt(data.substr(37, 32), 2) + "000");
-        /*
+            eqkTime = Number(parseInt(data.substr(37, 32), 2) + "000"),
+            eqkTimeStr = moment(eqkTime).add(9, "hours").format("YYYY/MM/DD HH:mm:ss"),
+            eqkStr = decodeURIComponent(escape(String.fromCharCode.apply(null, infoStrArr))).trim();
+        let eqkMag = parseInt(data.substr(20, 7), 2) / 10;
+        /*eqkDep = parseInt(data.substr(27, 10), 2) / 10,
         eqkMax = parseInt(data.substr(95, 4), 2),
         eqkMaxAreaStr = data.substr(99, 17),
         eqkMaxArea = [];
-    if (eqkMaxAreaStr != "11111111111111111") {
-        for (let i = 0; i < 17; i++) {
-            if (eqkMaxAreaStr.charAt(i) == "1") eqkMaxArea.push(ra[i]);
-        }
-    } else eqkMaxArea.push("-");
-    */
-        let infoStrArr = [];
-        for (let i = byteArray.byteLength - maxEqkStrLen; i < byteArray.byteLength; i++) infoStrArr.push(byteArray[i]);
-        eqkStr = decodeURIComponent(escape(String.fromCharCode.apply(null, infoStrArr))).trim();
-        eqkTimeStr = moment(eqkTime).add(9, "hours").format("YYYY/MM/DD HH:mm:ss");
+        if (eqkMaxAreaStr != "11111111111111111") {
+            for (let i = 0; i < 17; i++) {
+                if (eqkMaxAreaStr.charAt(i) == "1") eqkMaxArea.push(ra[i]);
+            }
+        } else eqkMaxArea.push("-");
+        */
         lasteqkocr = moment(eqkTime).add(9, "hours");
         eqkMag > 0 ? eqkMag = eqkMag.toFixed(1) : eqkMag = noinfo;
         /*
@@ -157,7 +156,7 @@ exports.pews = async function () {
     }
     catch (err) {
         sendtoelect("nowtime", (simmode ? "[SIM] " : "") + "GET ERROR");
-        return console.error("[EQK_API] Error: " + err.message);
+        return console.error((simmode ? "[SIM] " : "") + "Error: " + err.message);
     }
     if (!simmode) {
         servertime = moment(res.headers.date);
@@ -177,7 +176,7 @@ exports.pews = async function () {
         sendtoelect("nowtime", `${(simmode ? "[SIM] " : "")}${res.statusCode} ERROR`);
         return console.error("[PEWS] status: " + res.statusCode);
     }
-    servertime = (!simmode ? moment(servertime).format("YYYY/MM/DD HH:mm:ss") : moment(servertime));
+    //servertime = moment(servertime);
     let byteArray = new Uint8Array(body), header = "", binaryStr = lpad(byteArray[0].toString(2), 8);
     for (let i = 0; i < headerLen; i++) header += lpad(byteArray[i].toString(2), 8);
     for (let i = headerLen; i < byteArray.byteLength; i++) binaryStr += lpad(byteArray[i].toString(2), 8);
@@ -201,18 +200,16 @@ exports.pews = async function () {
         lastphase = phase;
     }
     if (phase !== 1) {
-        const eqkocrdiff = (Math.floor(moment.duration(moment(servertime).add((!simmode ? -9 : 9), "hours").diff(lasteqkocr)).asSeconds()));
-        sendtoelect("eqktime", lasteqkocr.format("YYYY/MM/DD HH:mm:ss") + " [" + (eqkocrdiff >= 60 ? Math.floor(eqkocrdiff / 60) + "분" : eqkocrdiff + "초") + " 지남]");
+        const eqkocrdiff = (Math.floor(moment.duration((!simmode ? servertime : moment(servertime).add(9, "hours")).diff(lasteqkocr)).asSeconds()));
+        sendtoelect("eqktime", lasteqkocr.format("YYYY/MM/DD HH:mm:ss") + " [" + (eqkocrdiff >= 0 ? (eqkocrdiff >= 60 ? Math.floor(eqkocrdiff / 60) + "분" : eqkocrdiff + "초") : "?") + " 지남]");
     }
     if (header.substr(0, 1) === "1" || staList.length < 99) fn_getSta(url + ".s", binaryStr);
     else fn_callback(binaryStr);
 }
 
 function monitor_on() {
-    const { spawn } = require('child_process'),
-        DisplayPower = spawn(__dirname + "\\DisplayPower.exe").stdout.on('data', (data) => {
-            if (data.toString() === "Mouse Moved!") DisplayPower.destroy();
-        });
+    const { exec } = require('child_process');
+    exec("rundll32.exe user32.dll,keybd_event 20 69 2 0");
 }
 
 const location = (data, callback) => {
@@ -275,7 +272,7 @@ async function getgrid(id, callback) {
         [res, body] = await requestResult;
     }
     catch (err) {
-        return console.error("[EQK_API] Error: " + err.message);
+        return console.error("[PEWS-Grid] Error: " + err.message);
     }
     if (res.statusCode !== 200 || new Uint8Array(body) === "") {
         callback();
@@ -387,7 +384,7 @@ const StartSimulation = (data) => {
         .seconds(Number(time.substr(12, 2)))
         .subtract(1, "months")
         .subtract(32410000, "milliseconds");
-    timestr = time.format("YYYYMMDDHHmmss");
+    const timestr = time.format("YYYYMMDDHHmmss");
     let dur = Number(timestr) < 20191101000000 ? 300000 : 500000;
     dur = data["loc"].indexOf("북한") == -1 ? dur : 1200000;
     simmode = true;
