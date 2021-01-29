@@ -47,12 +47,12 @@
             </div>
         </div>
     </div>
-    <audio id="countdown" style="display:hidden"></audio>
-    <audio id="tts" volume="0.5" style="display:hidden"></audio>
-    <audio id="sound" style="display:hidden"></audio>
+    <audio id="countdown" style="display:hidden" type="audio/mpeg"></audio>
+    <audio id="tts" volume="0.5" style="display:hidden" type="audio/mpeg"></audio>
+    <audio id="sound" style="display:hidden" type="audio/mpeg"></audio>
 </body>
 <script>
-    const mmicolor = ["", "#FFFFFF", "#a0e6ff", "#92d050", "#ffff00", "#ffc000", "#ff0000", "#a32777", "#632523", "#4c2600", "#000"];
+    const mmicolor = ["#FFFFFF", "#FFFFFF", "#A0E6FF", "#92D050", "#FFFF00", "#FFC000", "#FF0000", "#A32777", "#632523", "#4C2600", "#000000", "#000000", "#DFDFDF", "#BFBFBF", "#9F9F9F"];
     let phase = 1, setting = {}, update = true, ttswaitlist = [];
     function UI_update(type, result) {
         if (!update) return;
@@ -67,14 +67,20 @@
                     $(`.maxmmi.info-title`).text("최대진도");
                 }
                 else headercolor = "black";
-                if (setting["pewsweb"] && (result === 2 || result === 3)) window.swave.PopupPewsWeb();
                 $("#header").css("background-color", headercolor);
             }
             $(".wave-info." + type).text((result !== undefined || result !== null) ? result : "?");
             if (type === "swavetime") {
                 let color = "white";
                 if (typeof (result) === "number") {
-                    if ((setting["recp2"] && (phase === 2)) || (setting["recp3"] && (phase === 3)) && (result >= 0 && result <= 60)) CountdownPlay(`time${result}.mp3`);
+                    if ((setting["recp2"] && (phase === 2)) || (setting["recp3"] && (phase === 3))) {
+                        CountdownPlay((result !== 0 ? "n" + result : "arrive") + ".mp3");
+                        const sr = String(result);
+                        if (result > 10 && sr.charAt(sr.length - 1) === "0") {
+                            TTSaddlist("jindo.mp3");
+                            TTSaddlist("n" + $(".wave-info.maxmmi").text() + ".mp3");
+                        }
+                    }
                     if (result <= 60) color = "yellow";
                     if (result <= 20) color = "orange";
                     if (result <= 10) color = "red";
@@ -132,7 +138,8 @@
                             TTSaddlist("phase" + phase + ".mp3");
                             if (phase === 2) {
                                 SoundPlay("alarm.mp3");
-                                TTSaddlist("jindo" + result + ".mp3");
+                                TTSaddlist("jindo.mp3");
+                                TTSaddlist("n" + result + ".mp3");
                             }
                             winnoti(`지진 ${(phase === 2 ? "신속" : "상세")} 정보`, `${$("#eqktitle").text().replace("M", "\n규모:")}\n${$(`.maxmmi.info-title`).text()}: ${$(".wave-info.maxmmi").text()}\n지진파 도달까지 ${$(".wave-info.swavetime").text()}초`);
                         }
@@ -147,13 +154,22 @@
             if (type === "staupdate") {
                 if (result === "-") return $(".stammi").css("color", "#FFFFFF");
                 $(".staname").text(result["staname"]);
-                $(".stammi").text("진도 " + result["stammi"]).css("color", mmicolor[result["stammi"]]);
+                let strmmi = result["stammi"], bcolor = "#000000";
+                if (result["stammi"] > 11) {
+                    strmmi = "1[" + (result["stammi"] - 10) + "단계]";
+                } else if (result["stammi"] === 10 || result["stammi"] === 11) {
+                    bcolor = "#FFFFFF";
+                }
+                $(".stammi").text("진도 " + strmmi);
+                if (result["stammi"]) {
+                    $(".stammi").css("color", mmicolor[result["stammi"]]).css("backgroundColor", bcolor);
+                }
             }
         }
         else $(`#${type}`).text((result || "-"));
     }
     function winnoti(t, b) {
-        if (Notification.permission !== "granted" || !setting["winnoti"]) return;
+        if (!setting["winnoti"]) return;
         const n = new Notification(t, { body: b, icon: "../icon.ico" });
         setTimeout(() => {
             if (n) n.close();
@@ -161,19 +177,27 @@
     }
     function CountdownPlay(path) {
         if (!setting["sound"]) return;
-        let player = document.getElementById("countdown");
-        player.src = "../../../src/sound/" + path;
-        player.play();
+        try {
+            let player = document.getElementById("countdown");
+            player.src = "../../src/sound/" + path;
+            player.play();
+        } catch (err) {
+            console.log("Sound play fail:", err);
+        }
     }
     function TTSPlay() {
         if (!ttswaitlist[0] || !setting["sound"]) return;
-        let player = document.getElementById("tts");
-        player.src = "../../../src/sound/" + ttswaitlist[0];
-        player.play();
-        player.addEventListener("ended", function () {
-            ttswaitlist.shift();
-            TTSPlay();
-        });
+        try {
+            let player = document.getElementById("tts");
+            player.src = "../../src/sound/" + ttswaitlist[0];
+            player.play();
+            player.addEventListener("ended", function () {
+                ttswaitlist.shift();
+                TTSPlay();
+            });
+        } catch (err) {
+            console.log("Sound play fail:", err);
+        }
     }
     function TTSaddlist(path) {
         if (!ttswaitlist[0]) {
@@ -184,7 +208,7 @@
     function SoundPlay(path) {
         if (!setting["sound"]) return;
         let player = document.getElementById("sound");
-        player.src = "../../../src/sound/" + path;
+        player.src = "../../src/sound/" + path;
         player.play();
     }
     function Setting(json) {

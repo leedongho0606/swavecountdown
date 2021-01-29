@@ -17,7 +17,7 @@ body {
     top: 0;
     left: 0;
     white-space: nowrap;
-    overflow: hidden; /*안먹히는거 같은데 일단쓺*/
+    overflow: hidden;
 }
 
 ::-webkit-scrollbar {
@@ -27,10 +27,11 @@ body {
 #header {
     position: relative;
     text-align: center;
+    -webkit-app-region: drag;
 }
 
 #header > #eqktitle {
-    font-size: 30pt;
+    font-size: 26pt;
     color: white;
 }
 #time {
@@ -97,8 +98,3 @@ body {
 .mylocsta {
     color: white;
 }
-/*
-.wave-footer {
-    font-size: 12pt;
-}
-*/

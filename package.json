@@ -1,17 +1,20 @@
 {
   "name": "swave_countdown",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "swave countdown by ldh0606",
   "main": "index.js",
   "dependencies": {
-    "date-utils": "^1.2.21",
+    "events": "^3.2.0",
     "fs": "0.0.1-security",
-    "moment": "^2.29.1",
-    "request": "^2.88.2"
+    "moment": "^2.29.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "devDependencies": {
-    "electron": "10.1.5",
-    "electron-packager": "^15.1.0"
+    "asar": "^3.0.3",
+    "electron": "^10.2.0",
+    "electron-packager": "^15.2.0"
   },
   "scripts": {
     "start": "electron .",
@@ -23,7 +26,7 @@
     "icon": "src/icon.ico",
     "asar": true,
     "appId": "com.swavecountdown.app",
-    "productName": "지진파 도달알림",
+    "productName": "swavecountdown",
     "files": [
       {
         "filter": [
@@ -51,7 +54,8 @@
       "allowToChangeInstallationDirectory": true,
       "language": 1042,
       "shortcutName": "지진파 도달알림",
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "createDesktopShortcut": false
     },
     "directories": {
       "output": "installer"

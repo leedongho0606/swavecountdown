@@ -14,21 +14,22 @@
 
 <body>
     <h2>현재기준시각: <span id="standard">-</span></h2>
-    <input type="range" id="timerange" min="-29" max="0" step="1" value="0" oninput="Timeset(this.value)"
+    <input type="range" id="timerange" max="0" min="-29" step="1" value="0" oninput="Timeset(this.value)"
         style="width: 100%;">
     <hr>
-    <h3>※ 시뮬레이션에는 적용되지 않습니다.</h3>
+    <h3>※ 시뮬레이션모드에는 적용되지 않습니다.</h3>
 </body>
 <script>
     function Inputset(time) {
-        //console.log("Received:", time);
         document.getElementById("timerange").value = time;
-        document.getElementById("standard").innerText = time < 0 ? String(time).replace("-", "") + "분 전" : "현재";
+        document.getElementById("standard").innerText = getStr(time);
     }
     function Timeset(time) {
-        //console.log("Send:", time);
-        document.getElementById("standard").innerText = time < 0 ? String(time).replace("-", "") + "분 전" : "현재";
+        document.getElementById("standard").innerText = getStr(time);
         window.swave.SendToMainProcces(time);
+    }
+    function getStr(time) {
+        return time < 0 ? String(time).replace("-", "") + "분 전" : "현재";
     }
 </script>
 
