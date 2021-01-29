@@ -13,18 +13,18 @@ path.data = path.local + "\\data\\";
 console.log("dev mode:", isdev);
 
 pews.on("eqkInfo", (obj, phase) => {
-    sendtoelect("phaseupdate", phase);
-    sendtoelect("eqktitle", `${obj.loc} M ${obj.mag}`);
+    sendtoelect(win, "phaseupdate", phase);
+    sendtoelect(win, "eqktitle", `${obj.loc} M ${obj.mag}`);
     obj.time = new Date(obj.time);
     let [pwave, swave] = calc.wavecount(pews.servertime, obj.time, obj.lat, obj.lon, myloc.lat, myloc.lon);
-    countdown.s = swave/* - 1*/;
-    countdown.p = pwave/* - 1*/;
-    countdown.first_s = swave/* - 1*/;
+    countdown.s = swave;
+    countdown.p = pwave;
+    countdown.first_s = swave;
     wavecountdown();
     obj.time = obj.time.setHours(obj.time.getHours() + 9);
-    sendtoelect("eqktime", timeformat.ymd(obj.time));
+    sendtoelect(win, "eqktime", timeformat.ymd(obj.time));
     pews.once("gridArray", gridArr => {
-        sendtoelect("maxmmi", pews.GetLocationMMI(myloc.lat, myloc.lon, gridArr));
+        sendtoelect(win, "maxmmi", pews.GetLocationMMI(myloc.lat, myloc.lon, gridArr));
     });
     lasteot = obj.time;
     if ((setdata["recp2"] && (phase === 2)) || (setdata["recp3"] && (phase === 3))) {
@@ -40,7 +40,7 @@ pews.on("eqkInfo", (obj, phase) => {
         if (setdata["pewsweb"]) {
             popupwindow("https://www.weather.go.kr/pews/", 848, 950, "pci.js", true, () => {
                 location(null, r => {
-                    popwin.webContents.send("location", r);
+                    sendtoelect(popwin, "location", r);
                 });
             });
         }
@@ -48,14 +48,14 @@ pews.on("eqkInfo", (obj, phase) => {
     function wavecountdown() {
         function down() {
             win.setProgressBar(Math.abs(((countdown.first_s - countdown.s) / countdown.first_s).toFixed(4)));
-            sendtoelect("swavetime", countdown.s);
-            sendtoelect("pwavetime", countdown.p);
+            sendtoelect(win, "swavetime", countdown.s);
+            sendtoelect(win, "pwavetime", countdown.p);
             if (countdown.s <= 0 && countdown.p <= 0) stticlear();
             countdown.s -= 1;
             countdown.p -= 1;
         }
-        sendtoelect("swavetime", countdown.s);
-        sendtoelect("pwavetime", countdown.p);
+        sendtoelect(win, "swavetime", countdown.s);
+        sendtoelect(win, "pwavetime", countdown.p);
         if (countdown.s < 0 && countdown.p < 0) return win.setProgressBar(1);
         setTimeout(down, 1000);
         stti_use = true;
@@ -87,7 +87,7 @@ pews.on("Station", sta => {
     }
     for (let s of sta) {
         if (s.idx === nearsta) {
-            sendtoelect("staupdate", { "staname": (s.name || "---"), "stammi": (s.mmi || "-") });
+            sendtoelect(win, "staupdate", { "staname": (s.name || "---"), "stammi": (s.mmi || "-") });
             break;
         }
     }
@@ -98,12 +98,12 @@ pews.on("phaseChange", phase => {
         lasteot = null;
         stticlear();
         win.setProgressBar(-1);
-        sendtoelect("eqktitle", "-");
-        sendtoelect("eqktime", "----/--/-- --:--:--");
-        sendtoelect("maxmmi", "-");
-        sendtoelect("swavetime", "-");
-        sendtoelect("pwavetime", "-");
-        sendtoelect("phaseupdate", phase);
+        sendtoelect(win, "eqktitle", "-");
+        sendtoelect(win, "eqktime", "----/--/-- --:--:--");
+        sendtoelect(win, "maxmmi", "-");
+        sendtoelect(win, "swavetime", "-");
+        sendtoelect(win, "pwavetime", "-");
+        sendtoelect(win, "phaseupdate", phase);
     }
 });
 
@@ -117,21 +117,21 @@ function PewsMode() {
 pews.on("tick", (log, code, info) => {
     console.log(log);
     if (lasteot) {
-        sendtoelect("eqktime", timeformat.ymd(lasteot) + " [" + calc.timediffstr(pews.servertime, lasteot) + " 경과]");
+        sendtoelect(win, "eqktime", timeformat.ymd(lasteot) + " [" + calc.timediffstr(pews.servertime, lasteot) + " 경과]");
     }
     let nt = new Date(pews.servertime);
     nt = nt.setHours(nt.getHours() + 9);
-    sendtoelect("nowtime", PewsMode() + timeformat.ymdutc(nt));
+    sendtoelect(win, "nowtime", PewsMode() + timeformat.ymdutc(nt));
     if (code) {
         if (code === "Unknown" && info && info.includes("getaddrinfo ENOTFOUND")) {
-            return win.webContents.send("nowtime", "기상청 서버연결 불가");
+            return sendtoelect(win, "nowtime", "기상청 서버연결 불가");
         }
-        win.webContents.send("nowtime", PewsMode() + code + " ERROR");
+        sendtoelect(win, "nowtime", PewsMode() + code + " ERROR");
     }
 });
 
-function sendtoelect(name, json) {
-    if (win) win.webContents.send(name, json);
+function sendtoelect(top, name, json) {
+    if (top) top.webContents.send(name, json);
 }
 
 function location(data, callback) {
@@ -326,7 +326,7 @@ function maketrayicon() {
                         dialog.showMessageBox({ type: "info", title: "사용자 위치설정 안내", message: "지도에 본인의 위치를 클릭하여 마커를 표시해주세요!\n마커가 표시되지 않는 경우 잠시후 재시도 하세요." });
                         popupwindow("https://www.google.com/maps/", 848, 950, "gmap_inject.js", true, () => {
                             location(null, r => {
-                                if (popwin) popwin.webContents.send("location", r);
+                                if (popwin) sendtoelect(popwin, "location", r);
                             });
                         });
                     }
@@ -446,8 +446,8 @@ function maketrayicon() {
                     label: "시뮬레이션",
                     click: function () {
                         popupwindow("simulation.html", 470, 400, "sim_renderer.js", false, () => {
-                            popwin.webContents.send("eqkid", pews.lastid);
-                            popwin.webContents.send("simstatus", pews.sim);
+                            sendtoelect(popwin, "eqkid", pews.lastid);
+                            sendtoelect(popwin, "simstatus", pews.sim);
                         });
                     }
                 },
@@ -455,7 +455,7 @@ function maketrayicon() {
                     label: "기준시각 조정",
                     click: function () {
                         popupwindow("timeset.html", 430, 210, "timeset_renderer.js", false, () => {
-                            popwin.webContents.send("nowtimeset", pews.minusmin);
+                            sendtoelect(popwin, "nowtimeset", pews.minusmin);
                         });
                     }
                 },
@@ -464,7 +464,7 @@ function maketrayicon() {
                     click: function () {
                         popupwindow("https://www.weather.go.kr/pews/", 848, 950, "pci.js", true, () => {
                             location(null, r => {
-                                popwin.webContents.send("location", r);
+                                sendtoelect(popwin, "location", r);
                             });
                         });
                     }
@@ -536,11 +536,11 @@ ipcMain.on("simulation", (event, arg) => {
         }
         sas = setTimeout(() => {
             pews.StopSimulation();
-            popwin.webContents.send("simstatus", pews.sim);
+            sendtoelect(popwin, "simstatus", pews.sim);
         }, dur * 1000);
     }
     else pews.StopSimulation();
-    popwin.webContents.send("simstatus", pews.sim);
+    sendtoelect(popwin, "simstatus", pews.sim);
     event.returnValue = true;
 });
 
