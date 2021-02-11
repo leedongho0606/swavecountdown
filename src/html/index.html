@@ -179,7 +179,7 @@
         if (!setting["sound"]) return;
         try {
             let player = document.getElementById("countdown");
-            player.src = "../../src/sound/" + path;
+            player.src = "../../../src/sound/" + path;
             player.play();
         } catch (err) {
             console.log("Sound play fail:", err);
@@ -189,7 +189,7 @@
         if (!ttswaitlist[0] || !setting["sound"]) return;
         try {
             let player = document.getElementById("tts");
-            player.src = "../../src/sound/" + ttswaitlist[0];
+            player.src = "../../../src/sound/" + ttswaitlist[0];
             player.play();
             player.addEventListener("ended", function () {
                 ttswaitlist.shift();
@@ -208,7 +208,7 @@
     function SoundPlay(path) {
         if (!setting["sound"]) return;
         let player = document.getElementById("sound");
-        player.src = "../../src/sound/" + path;
+        player.src = "../../../src/sound/" + path;
         player.play();
     }
     function Setting(json) {

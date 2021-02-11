@@ -10,7 +10,6 @@ let win, popwin, isdev = process.argv[2] === "test",
     setdata = {},
     stti, stti_use = true, lasteot, nearsta, psbid, sas;
 path.data = path.local + "\\data\\";
-console.log("dev mode:", isdev);
 
 pews.on("eqkInfo", (obj, phase) => {
     sendtoelect(win, "phaseupdate", phase);
@@ -72,7 +71,6 @@ function stticlear() {
         countdown.first_s = 0;
     }
 }
-
 pews.on("Station", sta => {
     if (!nearsta) {
         let getnearsta = [];
@@ -92,7 +90,6 @@ pews.on("Station", sta => {
         }
     }
 });
-
 pews.on("phaseChange", phase => {
     if (phase === 1) {
         lasteot = null;
@@ -106,14 +103,12 @@ pews.on("phaseChange", phase => {
         sendtoelect(win, "phaseupdate", phase);
     }
 });
-
 function PewsMode() {
     let str = "";
     str += !pews.sim ? "" : "[SIM] ";
     str += pews.minusmin === 0 ? "" : "[" + (-pews.minusmin) + "분 전] ";
     return str;
 }
-
 pews.on("tick", (log, code, info) => {
     console.log(log);
     if (lasteot) {
@@ -124,16 +119,14 @@ pews.on("tick", (log, code, info) => {
     sendtoelect(win, "nowtime", PewsMode() + timeformat.ymdutc(nt));
     if (code) {
         if (code === "Unknown" && info && info.includes("getaddrinfo ENOTFOUND")) {
-            return sendtoelect(win, "nowtime", "기상청 서버연결 불가");
+            return sendtoelect(win, "nowtime", "PEWS 서버연결 불가");
         }
         sendtoelect(win, "nowtime", PewsMode() + code + " ERROR");
     }
 });
-
 function sendtoelect(top, name, json) {
     if (top) top.webContents.send(name, json);
 }
-
 function location(data, callback) {
     makesetdir();
     const fs = require("fs");
@@ -184,11 +177,12 @@ function createWindow() {
         icon: __dirname + "/src/icon.ico",
         show: false
     });
-    if (process.argv[1] !== "-hide") win.show();
     win.loadFile(`${__dirname}/src/html/index.html`);
     win.setMenuBarVisibility(false);
     const ssize = screen.getPrimaryDisplay().size;
+    win.show();
     win.setPosition(ssize.width - win.getSize()[0], ssize.height - win.getSize()[1] - 40, false);
+    if (process.argv[1] === "-hide") win.hide();
     win.webContents.on("did-finish-load", () => {
         maketrayicon();
     });
@@ -213,7 +207,6 @@ function createWindow() {
         if ((input.control || input.shift) && input.key.toLowerCase() === 'r') event.preventDefault();
     });
 }
-
 function popupwindow(url, w, h, ren, notlocal, loaded) {
     if (popwin) popwin.close();
     popwin = new BrowserWindow({
@@ -243,7 +236,6 @@ function popupwindow(url, w, h, ren, notlocal, loaded) {
         if ((input.control || input.shift) && input.key.toLowerCase() === 'r') event.preventDefault();
     });
 }
-
 function savedata(pt, data, solution, callback) {
     const fs = require('fs');
     fs.writeFile(path.data + pt, data, "utf-8", err => {
@@ -254,13 +246,11 @@ function savedata(pt, data, solution, callback) {
         if (callback) callback(true);
     });
 }
-
 function makesetdir() {
     const fs = require("fs");
     !fs.existsSync(path.local) && fs.mkdirSync(path.local);
     !fs.existsSync(path.data) && fs.mkdirSync(path.data);
 }
-
 function settingdata(items) {
     const fs = require("fs");
     process.noAsar = true;
@@ -298,7 +288,6 @@ function settingdata(items) {
     if (readeddata) savedata("setting.json", JSON.stringify(json), "저장");
     win.webContents.send("setting", json);
 }
-
 let tray = null;
 function maketrayicon() {
     tray = new Tray(__dirname + "/src/icon.ico");
@@ -494,14 +483,12 @@ function maketrayicon() {
     ]);
     tray.setContextMenu(contextMenu);
 }
-
 app.on("ready", () => {
     createWindow();
     location();
     const update = require("./utils/update");
     update.check(app.getVersion(), dialog);
 });
-
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         win = null;
@@ -509,17 +496,14 @@ app.on("window-all-closed", () => {
         app.quit();
     }
 });
-
 app.on("activate", () => {
     if (win === null) createWindow();
 });
-
 ipcMain.on("location", (event, arg) => {
     location(arg, result => {
         event.returnValue = result;
     });
 });
-
 ipcMain.on("simulation", (event, arg) => {
     nearsta = null;
     pews._lasteqk = null;
@@ -543,12 +527,10 @@ ipcMain.on("simulation", (event, arg) => {
     sendtoelect(popwin, "simstatus", pews.sim);
     event.returnValue = true;
 });
-
 ipcMain.on("timeset", (event, arg) => {
     pews.minusmin = Number(arg);
     event.returnValue = true;
 });
-
 process.on('uncaughtException', (err, origin) => {
     let chunk = Buffer.alloc(0);
     const

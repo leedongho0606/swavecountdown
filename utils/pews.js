@@ -83,7 +83,9 @@ class Pews extends Events.EventEmitter {
                     this.Log("[BFILE] Error:", e);
                     this.emit("tick", requrl, "Unknown", e);
                     this.emit("reqFail", requrl, "Unknown");
-                });
+                })/*
+                .finally(() => {
+                });*/
         }
         else {
             try {
@@ -152,18 +154,15 @@ class Pews extends Events.EventEmitter {
             binaryStr += fuils.lpad(bin[i].toString(2), 8);
         }
         let phase = 1;
-        if (header.substr(1, 1) === "0" && header.substr(2, 1) === "0") {
+        if (header.substr(1, 1) === "0") {
             phase = 1;
         }
         else if (header.substr(1, 1) === "1" && header.substr(2, 1) === "0") {
             phase = 2;
         }
-        else if (header.substr(1, 1) === "1" && header.substr(2, 1) === "1") {
+        else if (header.substr(2, 1) === "1") {
             phase = 3;
         }
-        /*else if (header.substr(1, 1) === "0" && header.substr(2, 1) === "1") {
-            phase = 4;
-        }*/
         if (this._lastphase !== phase) {
             this.emit("phaseChange", phase);
             this._lastphase = phase;

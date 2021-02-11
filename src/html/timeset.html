@@ -21,15 +21,17 @@
 </body>
 <script>
     function Inputset(time) {
+        //console.log("Received:", time);
         document.getElementById("timerange").value = time;
         document.getElementById("standard").innerText = getStr(time);
     }
     function Timeset(time) {
+        //console.log("Send:", time);
         document.getElementById("standard").innerText = getStr(time);
         window.swave.SendToMainProcces(time);
     }
     function getStr(time) {
-        return time < 0 ? String(time).replace("-", "") + "분 전" : "현재";
+        return time < 0 ? String(time).replace("-","") + "분 전" : "현재";
     }
 </script>
 
